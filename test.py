@@ -17,9 +17,11 @@ def cnn_model_fn(features, labels, mode):
         filters=32,
         kernel_size=[5, 5],
         padding='same',
-        activation=tf.nn.relu
+        activation=tf.nn.relu,
+        name="conv1"
     )
-    pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+    pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[
+                                    2, 2], strides=2, name='pool1')
 
     # Computes 64 features
     conv2 = tf.layers.conv2d(
@@ -83,7 +85,7 @@ def main(unused_argv):
         model_fn=cnn_model_fn, model_dir="/tmp/mnist_convet_model")
 
     # Set up logging for predictions
-    tensors_to_log = {"probabilities": "softmax_tensor"}
+    tensors_to_log = {"probabilities": "softmax_tensor", "conv": "pool1"}
     logging_hook = tf.train.LoggingTensorHook(
         tensors=tensors_to_log, every_n_iter=50)
 
