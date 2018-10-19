@@ -1,9 +1,8 @@
-
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 import csv
 import numpy as np
-mnist = tf.contrib.learn.datasets.load_dataset("mnist")
+import sys
 
 # Python optimisation variables
 learning_rate = 0.00146
@@ -48,9 +47,13 @@ def create_new_conv_layer(input_data, num_input_channels, num_filters, filter_sh
     return out_layer
 
 
+mnist = tf.contrib.learn.datasets.load_dataset("mnist")
+
 # create some convolutional layers
-layer1 = create_new_conv_layer(x_shaped, 1, 32, [5, 5], [2, 2], name='layer1')
-layer2 = create_new_conv_layer(layer1, 32, 64, [5, 5], [2, 2], name='layer2')
+layer1 = create_new_conv_layer(
+    x_shaped, 1, 32, [5, 5], [2, 2], name='layer1')
+layer2 = create_new_conv_layer(
+    layer1, 32, 64, [5, 5], [2, 2], name='layer2')
 
 flattened = tf.reshape(layer2, [-1, 7 * 7 * 64])
 
@@ -66,7 +69,6 @@ wd2 = tf.Variable(tf.truncated_normal([1000, 10], stddev=0.03), name='wd2')
 bd2 = tf.Variable(tf.truncated_normal([10], stddev=0.01), name='bd2')
 dense_layer2 = tf.matmul(dense_layer1, wd2) + bd2
 y_ = tf.nn.softmax(dense_layer2)
-
 
 cross_entropy = tf.reduce_mean(
     tf.nn.softmax_cross_entropy_with_logits(logits=dense_layer2, labels=y))
@@ -87,63 +89,96 @@ finalReps = []
 
 saver = tf.train.Saver()
 
-with open("weights_1_multepochs.txt", 'w') as file:
-    # file.write("test")
-    with tf.Session() as sess:
-        # initialise the variables
-        print("starting session")
-        sess.run(init_op)
-        total_batch = int(len(mnist.train.labels) / batch_size)
-        for epoch in range(epochs):
-            print("starting epcoh:", (epoch+1))
-            avg_cost = 0
-            for i in range(total_batch):
-                # print("batch ", (i+1))
-                if (i % 100 == 0):
-                    print("batch ", i)
-                batch_x, batch_y = mnist.train.next_batch(
-                    batch_size=batch_size)
-                indices = batch_y
-                y_matrix = tf.one_hot(indices, depth).eval(session=sess)
-                # print("encoding scores")
-                _, c = sess.run([optimiser, cross_entropy],
-                                feed_dict={x: batch_x, y: y_matrix})
-                avg_cost += c / total_batch
-            y_test_matrix = tf.one_hot(
-                mnist.test.labels[:100], depth).eval(session=sess)
-            test_acc = sess.run(accuracy,
-                                feed_dict={x: mnist.test.images[:100], y: y_test_matrix})
-            print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(avg_cost),
-                  "test accuracy: {: .3f}".format(test_acc))
 
-        file.write("epoch"+str(i)+"\n")
-        file.write("layer1\n")
-        weight = dense_layer1.eval(session=sess, feed_dict={
-            x: mnist.test.images[:500]})
-        # finalReps.append(weight)
-        print("weights at epoch: ", weight)
-        weights_str = list(
-            map(lambda x: np.array2string(np.array(x), separator=","), weight))
-        file.write(np.array2string(np.array(weights_str), separator=","))
-        # save_path = saver.save(sess, "/tmp/model2.ckpt")
-        file.write('\n')
+def train_network(fname):
+    # build_model()
+    with open(fname) as file:
+        # file.write("test")
+        with tf.Session() as sess:
+            # initialise the variables
+            print("starting session")
+            sess.run(init_op)
+            total_batch = int(len(mnist.train.labels) / batch_size)
+            for epoch in range(epochs):
+                print("starting epcoh:", (epoch+1))
+                avg_cost = 0
+                for i in range(total_batch):
+                    # print("batch ", (i+1))
+                    if (i % 100 == 0):
+                        print("batch ", i)
+                    batch_x, batch_y = mnist.train.next_batch(
+                        batch_size=batch_size)
+                    indices = batch_y
+                    y_matrix = tf.one_hot(indices, depth).eval(session=sess)
+                    # print("encoding scores")
+                    _, c = sess.run([optimiser, cross_entropy],
+                                    feed_dict={x: batch_x, y: y_matrix})
+                    avg_cost += c / total_batch
+                y_test_matrix = tf.one_hot(
+                    mnist.test.labels[:100], depth).eval(session=sess)
+                test_acc = sess.run(accuracy,
+                                    feed_dict={x: mnist.test.images[:100], y: y_test_matrix})
+                print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(avg_cost),
+                      "test accuracy: {: .3f}".format(test_acc))
 
-        # saver.restore(sess, "/tmp/model2.ckpt")
-        file.write("layer2\n")
-        weight = dense_layer2.eval(session=sess, feed_dict={
-            x: mnist.test.images[:500]})
-        # finalReps.append(weight)
-        print("weights at epoch: ", weight)
-        weights_str = list(
-            map(lambda x: np.array2string(np.array(x), separator=","), weight))
-        file.write(np.array2string(np.array(weights_str), separator=","))
-        save_path = saver.save(sess, "/tmp/model2.ckpt")
-        file.write('\n')
+            file.write("epoch"+str(i)+"\n")
+            file.write("layer1\n")
+            weight = dense_layer1.eval(session=sess, feed_dict={
+                x: mnist.test.images[:500]})
+            # finalReps.append(weight)
+            print("weights at epoch: ", weight)
+            weights_str = list(
+                map(lambda x: np.array2string(np.array(x), separator=","), weight))
+            file.write(np.array2string(np.array(weights_str), separator=","))
+            # save_path = saver.save(sess, "/tmp/model2.ckpt")
+            file.write('\n')
+
+            # saver.restore(sess, "/tmp/model2.ckpt")
+            file.write("layer2\n")
+            weight = dense_layer2.eval(session=sess, feed_dict={
+                x: mnist.test.images[:500]})
+            # finalReps.append(weight)
+            print("weights at epoch: ", weight)
+            weights_str = list(
+                map(lambda x: np.array2string(np.array(x), separator=","), weight))
+            file.write(np.array2string(np.array(weights_str), separator=","))
+            save_path = saver.save(sess, "/tmp/model2.ckpt")
+            file.write('\n')
+
+            print("\nTraining complete!")
+            print(sess.run(accuracy, feed_dict={
+                x: mnist.test.images, y: mnist.test.labels}))
 
 
-print("\nTraining complete!")
-print(sess.run(accuracy, feed_dict={
-    x: mnist.test.images, y: mnist.test.labels}))
+def load_data(f_name):
+    # build_model()
+    with open(f_name, 'w') as file:
+        with tf.Session() as sess:
+            print("restoring previous session\n\n")
+            saver.restore(sess, "/tmp/model2.ckpt")
 
-f = open("backup.txt")
-f.write(array2string(finalReps))
+            file.write("layer1\n")
+            weight_1 = dense_layer1.eval(session=sess, feed_dict={
+                x: mnist.test.images[:500]})
+            weights_str = list(
+                map(lambda x: np.array2string(np.array(x), separator=","), weight))
+            file.write(np.array2string(np.array(weights_str), separator=","))
+            file.write('\n')
+
+            file.write("layer2\n")
+            weight_2 = dense_layer2.eval(session=sess, feed_dict={
+                x: mnist.test.images[:500]})
+            weights_str = list(
+                map(lambda x: np.array2string(np.array(x), separator=","), weight_2))
+            file.write(np.array2string(np.array(weights_str), separator=","))
+            file.write('\n')
+
+
+if __name__ == "__main__":
+    act = str(sys.argv[1])
+    print(act)
+    fname = str(sys.argv[2])
+    if act == "train":
+        train_network(fname)
+    elif act == "load":
+        load_data(fname)
