@@ -1,3 +1,8 @@
 MNIST-data/
 .ipynb_checkpoints/
 .vscode/
+*.png
+__pycache__/
+*.txt
+*.csv
+
