@@ -6,7 +6,7 @@ import sys
 
 # Python optimisation variables
 learning_rate = 0.00146
-epochs = 10
+#epochs = 10
 batch_size = 25
 
 # declare the training data placeholders
@@ -90,7 +90,7 @@ finalReps = []
 saver = tf.train.Saver()
 
 
-def train_network(fname):
+def train_network(fname,epochs=10):
     # build_model()
     with open(fname) as file:
         # file.write("test")
