@@ -90,7 +90,7 @@ finalReps = []
 saver = tf.train.Saver()
 
 
-def train_network(fname,epochs=10):
+def train_network(fname, epochs=10):
     # build_model()
     with open(fname) as file:
         # file.write("test")
@@ -108,6 +108,7 @@ def train_network(fname,epochs=10):
                         print("batch ", i)
                     batch_x, batch_y = mnist.train.next_batch(
                         batch_size=batch_size)
+                    print(batch_x.shape)
                     indices = batch_y
                     y_matrix = tf.one_hot(indices, depth).eval(session=sess)
                     # print("encoding scores")
