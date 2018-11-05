@@ -19,7 +19,6 @@ x_shaped = tf.reshape(x, [-1, 28, 28, 1])
 # now declare the output data placeholder - 10 digits
 y = tf.placeholder(tf.float32, [None, 10])
 
-
 def create_new_conv_layer(input_data, num_input_channels, num_filters, filter_shape, pool_shape, name):
     # setup the filter input shape for tf.nn.conv_2d
     conv_filt_shape = [filter_shape[0], filter_shape[1], num_input_channels,
@@ -46,7 +45,6 @@ def create_new_conv_layer(input_data, num_input_channels, num_filters, filter_sh
                                padding='SAME')
 
     return out_layer
-
 
 # create some convolutional layers
 layer1 = create_new_conv_layer(x_shaped, 1, 32, [5, 5], [2, 2], name='layer1')
