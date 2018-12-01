@@ -31,7 +31,8 @@ def create_new_conv_layer(input_data, num_input_channels, num_filters, filter_sh
     bias = tf.Variable(tf.truncated_normal([num_filters]), name=name+'_b')
 
     # setup the convolutional layer operation
-    out_layer = tf.nn.conv2d(input_data, weights, [1, 1, 1, 1], padding='SAME')
+    out_layer = tf.nn.conv2d(input_data, weights, [
+        1, 1, 1, 1], padding='SAME', name=name)
 
     # add the bias
     out_layer += bias
@@ -126,31 +127,46 @@ def train_network(fname, epochs=10):
             print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(avg_cost),
                   "test accuracy: {: .3f}".format(test_acc))
 
-            weight_c1 = layer1.eval(session=sess, feed_dict={
+            output_c1 = layer1.eval(session=sess, feed_dict={
                 x: test_images[:500]})
-            np.save("convLayer1_epoch_"+str(epoch), weight_c1)
+            np.save("convLayer1_epoch_"+str(epoch), output_c1)
 
-            weight_c2 = layer2.eval(session=sess, feed_dict={
-                x: test_images[:500]})
-            np.save("convLayer2_epoch_"+str(epoch), weight_c2)
+            #print([v for v in tf.global_variables()])
+            try:
+                v = [var for var in tf.global_variables() if var.op.name ==
+                     "layer1_W"][0]
+                print("**weights: ")
+                v_val = v.eval()
+                np.save("convWeight1_epoch_"+str(epoch), v_val)
 
-            weight_l1 = dense_layer1.eval(session=sess, feed_dict={
-                x: test_images[:500]})
-            # finalReps.append(weight)
-            print("weights 1 at epoch: ", weight_l1)
-            weights_str = list(
-                map(lambda x: np.array2string(np.array(x), separator=","), weight_l1))
-            np.save("denseLayer1_epoch_"+str(epoch), weight_l1)
+                v = [var for var in tf.global_variables() if var.op.name ==
+                     "layer2_W"][0]
+                v_val = v.eval()
+                np.save("convWeight2_epoch_"+str(epoch), v_val)
+            except:
+                print("**cant extract with kernel ")
 
-            weight_l2 = dense_layer2.eval(session=sess, feed_dict={
+            output_c2 = layer2.eval(session=sess, feed_dict={
                 x: test_images[:500]})
-            print("weights at epoch: ", weight_l2)
-            weights_str = list(
-                map(lambda x: np.array2string(np.array(x), separator=","), weight_l2))
-            #file.write(np.array2string(np.array(weights_str), separator=","))
+            np.save("convLayer2_epoch_"+str(epoch), output_c2)
+
+            output_l1 = dense_layer1.eval(session=sess, feed_dict={
+                x: test_images[:500]})
+            # finalReps.append(output)
+            print("outputs 1 at epoch: ", output_l1)
+            outputs_str = list(
+                map(lambda x: np.array2string(np.array(x), separator=","), output_l1))
+            np.save("denseLayer1_epoch_"+str(epoch), output_l1)
+
+            output_l2 = dense_layer2.eval(session=sess, feed_dict={
+                x: test_images[:500]})
+            print("outputs at epoch: ", output_l2)
+            outputs_str = list(
+                map(lambda x: np.array2string(np.array(x), separator=","), output_l2))
+            # file.write(np.array2string(np.array(outputs_str), separator=","))
             save_path = saver.save(sess, "/tmp/model_clothes.ckpt")
             # file.write('\n')
-            np.save("denseLayer2_epoch_"+str(epoch), weight_l2)
+            np.save("denseLayer2_epoch_"+str(epoch), output_l2)
 
         print("\nTraining complete!")
         """ print(sess.run(accuracy, feed_dict={
@@ -184,7 +200,7 @@ def load_data(f_name):
 if __name__ == "__main__":
     act = str(sys.argv[1])
     print(act)
-    #fname = str(sys.argv[2])
+    # fname = str(sys.argv[2])
     if act == "train":
         train_network("")
     elif act == "load":
