@@ -98,63 +98,62 @@ saver = tf.train.Saver()
 
 def train_network(fname, epochs=10):
     # build_model()
-    with open(fname) as file:
-        # file.write("test")
-        with tf.Session() as sess:
-            # initialise the variables
-            print("starting session")
-            sess.run(init_op)
-            total_batch = int(len(train_labels) / batch_size)
-            for epoch in range(5):
-                print("starting epcoh:", (epoch+1))
-                avg_cost = 0
-                for i in range(total_batch):
-                    # print("batch ", (i+1))
-                    if (i % 100 == 0):
-                        print("batch ", i)
-                    batch_x = train_images[25*i:25*(i+1)]
-                    batch_y = train_labels[25*i:25*(i+1)]
-                    indices = batch_y
-                    y_matrix = tf.one_hot(indices, depth).eval(session=sess)
-                    # print("encoding scores")
-                    _, c = sess.run([optimiser, cross_entropy],
-                                    feed_dict={x: batch_x, y: y_matrix})
-                    avg_cost += c / total_batch
-                y_test_matrix = tf.one_hot(
-                    test_labels[:100], depth).eval(session=sess)
-                test_acc = sess.run(accuracy,
-                                    feed_dict={x: test_images[:100], y: y_test_matrix})
-                print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(avg_cost),
-                      "test accuracy: {: .3f}".format(test_acc))
+    # file.write("test")
+    with tf.Session() as sess:
+        # initialise the variables
+        print("starting session")
+        sess.run(init_op)
+        total_batch = int(len(train_labels) / batch_size)
+        for epoch in range(5):
+            print("starting epcoh:", (epoch+1))
+            avg_cost = 0
+            for i in range(total_batch):
+                # print("batch ", (i+1))
+                if (i % 100 == 0):
+                    print("batch ", i)
+                batch_x = train_images[25*i:25*(i+1)]
+                batch_y = train_labels[25*i:25*(i+1)]
+                indices = batch_y
+                y_matrix = tf.one_hot(indices, depth).eval(session=sess)
+                # print("encoding scores")
+                _, c = sess.run([optimiser, cross_entropy],
+                                feed_dict={x: batch_x, y: y_matrix})
+                avg_cost += c / total_batch
+            y_test_matrix = tf.one_hot(
+                test_labels[:100], depth).eval(session=sess)
+            test_acc = sess.run(accuracy,
+                                feed_dict={x: test_images[:100], y: y_test_matrix})
+            print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(avg_cost),
+                  "test accuracy: {: .3f}".format(test_acc))
 
-                #file.write("epoch"+str(i)+"\n")
-                #file.write("layer1\n")
-                weight = dense_layer1.eval(session=sess, feed_dict={
-                    x: test_images[:500]})
-                # finalReps.append(weight)
-                print("weights at epoch: ", weight)
-                weights_str = list(
-                    map(lambda x: np.array2string(np.array(x), separator=","), weight))
-                #file.write(np.array2string(np.array(weights_str), separator=","))
-                # save_path = saver.save(sess, "/tmp/model2.ckpt")
-                #file.write('\n')
-                np.save("layer1_epoch_"+str(epoch), weight)
+            weight_c1 = layer1.eval(session=sess, feed_dict={
+                x: test_images[:500]})
+            np.save("convLayer1_epoch_"+str(epoch), weight_c1)
 
-                # saver.restore(sess, "/tmp/model2.ckpt")
-                #file.write("layer2\n")
-                weight = dense_layer2.eval(session=sess, feed_dict={
-                    x: test_images[:500]})
-                # finalReps.append(weight)
-                print("weights at epoch: ", weight)
-                weights_str = list(
-                    map(lambda x: np.array2string(np.array(x), separator=","), weight))
-                #file.write(np.array2string(np.array(weights_str), separator=","))
-                save_path = saver.save(sess, "/tmp/model_clothes.ckpt")
-                #file.write('\n')
-                np.save("layer2_epoch_"+str(epoch), weight)
+            weight_c2 = layer2.eval(session=sess, feed_dict={
+                x: test_images[:500]})
+            np.save("convLayer2_epoch_"+str(epoch), weight_c2)
 
-            print("\nTraining complete!")
-            """ print(sess.run(accuracy, feed_dict={
+            weight_l1 = dense_layer1.eval(session=sess, feed_dict={
+                x: test_images[:500]})
+            # finalReps.append(weight)
+            print("weights 1 at epoch: ", weight_l1)
+            weights_str = list(
+                map(lambda x: np.array2string(np.array(x), separator=","), weight_l1))
+            np.save("denseLayer1_epoch_"+str(epoch), weight_l1)
+
+            weight_l2 = dense_layer2.eval(session=sess, feed_dict={
+                x: test_images[:500]})
+            print("weights at epoch: ", weight_l2)
+            weights_str = list(
+                map(lambda x: np.array2string(np.array(x), separator=","), weight_l2))
+            #file.write(np.array2string(np.array(weights_str), separator=","))
+            save_path = saver.save(sess, "/tmp/model_clothes.ckpt")
+            # file.write('\n')
+            np.save("denseLayer2_epoch_"+str(epoch), weight_l2)
+
+        print("\nTraining complete!")
+        """ print(sess.run(accuracy, feed_dict={
                 x: test_images, y: test_labels})) """
 
 
@@ -185,8 +184,8 @@ def load_data(f_name):
 if __name__ == "__main__":
     act = str(sys.argv[1])
     print(act)
-    fname = str(sys.argv[2])
+    #fname = str(sys.argv[2])
     if act == "train":
-        train_network(fname)
+        train_network("")
     elif act == "load":
         load_data(fname)
