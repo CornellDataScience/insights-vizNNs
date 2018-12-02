@@ -3,12 +3,13 @@ from tensorflow import keras
 import csv
 import numpy as np
 import sys
-
+import os
 
 # Python optimisation variables
 learning_rate = 0.00146
 # epochs = 10
 batch_size = 50
+
 
 # declare the training data placeholders
 # input x - for 28 x 28 pixels = 784 - this is the flattened image data that is drawn from
@@ -97,6 +98,14 @@ finalReps = []
 saver = tf.train.Saver()
 
 
+def get_weight(var_name, file_name, epoch):
+    v = [var for var in tf.global_variables() if var.op.name ==
+         var_name][0]
+    v_val = v.eval()
+    np.save(os.path.join("train_data",
+                         file_name+str(epoch)), v_val)
+
+
 def train_network(fname, epochs=10):
     # build_model()
     # file.write("test")
@@ -129,22 +138,29 @@ def train_network(fname, epochs=10):
 
             output_c1 = layer1.eval(session=sess, feed_dict={
                 x: test_images[:500]})
-            np.save("convLayer1_epoch_"+str(epoch), output_c1)
+            np.save(os.path.join("train_data",
+                                 "convLayer1_epoch_"+str(epoch)), output_c1)
 
-            #print([v for v in tf.global_variables()])
-            try:
-                v = [var for var in tf.global_variables() if var.op.name ==
-                     "layer1_W"][0]
-                print("**weights: ")
-                v_val = v.eval()
-                np.save("convWeight1_epoch_"+str(epoch), v_val)
+            # print([v for v in tf.global_variables()])
+            # get weights for conv layers
+            get_weight("layer1_W", "convWeight1_epoch_", epoch)
+            get_weight("layer2_W", "convWeight2_epoch_", epoch)
 
-                v = [var for var in tf.global_variables() if var.op.name ==
-                     "layer2_W"][0]
-                v_val = v.eval()
-                np.save("convWeight2_epoch_"+str(epoch), v_val)
-            except:
-                print("**cant extract with kernel ")
+            # get weights for FC layers
+            """ get_weight("wd1", "fcWeight1_epoch_", epoch)
+            get_weight("wd2", "fcWeight1_epoch_", epoch)"""
+            """v = [var for var in tf.global_variables() if var.op.name ==
+                    "layer1_W"][0]
+            print("**weights: ")
+            v_val = v.eval()
+            np.save(os.path.join("train_data",
+                                    "convWeight1_epoch_"+str(epoch)), v_val)
+
+            v = [var for var in tf.global_variables() if var.op.name ==
+                    "layer2_W"][0]
+            v_val = v.eval()
+            np.save(os.path.join("train_data",
+                                    "convWeight2_epoch_"+str(epoch)), v_val)"""
 
             output_c2 = layer2.eval(session=sess, feed_dict={
                 x: test_images[:500]})
@@ -156,7 +172,8 @@ def train_network(fname, epochs=10):
             print("outputs 1 at epoch: ", output_l1)
             outputs_str = list(
                 map(lambda x: np.array2string(np.array(x), separator=","), output_l1))
-            np.save("denseLayer1_epoch_"+str(epoch), output_l1)
+            np.save(os.path.join("train_data",
+                                 "denseLayer1_epoch_"+str(epoch)), output_l1)
 
             output_l2 = dense_layer2.eval(session=sess, feed_dict={
                 x: test_images[:500]})
@@ -166,7 +183,8 @@ def train_network(fname, epochs=10):
             # file.write(np.array2string(np.array(outputs_str), separator=","))
             save_path = saver.save(sess, "/tmp/model_clothes.ckpt")
             # file.write('\n')
-            np.save("denseLayer2_epoch_"+str(epoch), output_l2)
+            np.save(os.path.join("train_data",
+                                 "denseLayer2_epoch_"+str(epoch)), output_l2)
 
         print("\nTraining complete!")
         """ print(sess.run(accuracy, feed_dict={
