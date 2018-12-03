@@ -27,13 +27,13 @@ function setGradient(class_num, start_color, stop_color) {
     .attr('class', 'start')
     .attr("offset", "0%")
     .attr("stop-color", start_color)
-    .attr("stop-opacity", 1);
+    .attr("stop-opacity", 0.5);
 
   gradient.append("stop")
     .attr('class', 'end')
     .attr("offset", "100%")
     .attr("stop-color", stop_color)
-    .attr("stop-opacity", 1);
+    .attr("stop-opacity", 0.5);
 }
 
 
@@ -79,7 +79,24 @@ function plot_epoch(data, epoch_num, saturation_scale, x, y, color, circle) {
   return circle;
 }
 
+function gen_path(data, index, line) {
+  var points = [
+    data["points"][index]["epoch0"],
+    data["points"][index]["epoch1"],
+    data["points"][index]["epoch2"],
+    data["points"][index]["epoch3"],
+    data["points"][index]["epoch4"]
+  ];
 
+  var label = data["points"][index]["label"];
+  var pathdata = line(points);
+
+  canvas.append("path")
+    .attr('d', pathdata)
+    .attr("stroke", "url(#svgGradient" + label + ")")
+    .attr("stroke-width", 2)
+    .attr("fill", "none");
+}
 
 d3.json('layer2_layout.json', function (data) {
   console.log(data);
@@ -100,11 +117,11 @@ d3.json('layer2_layout.json', function (data) {
   var color = d3.scaleOrdinal(d3.schemeCategory10);
 
   //var circle_1 = plot_epoch(data["points"], 0, -0.4, x, y, color);
-  plot_epoch(data["points"], 0, -0.6, x, y, color);
-  plot_epoch(data["points"], 1, -0.4, x, y, color);
+  //plot_epoch(data["points"], 0, -0.6, x, y, color);
+  /*plot_epoch(data["points"], 1, -0.4, x, y, color);
   plot_epoch(data["points"], 2, -0.2, x, y, color);
   plot_epoch(data["points"], 3, 0, x, y, color);
-  plot_epoch(data["points"], 4, 0.2, x, y, color);
+  plot_epoch(data["points"], 4, 0.2, x, y, color); */
 
   /* var lines = canvas.selectAll("line")
     .data(data["points"])
@@ -135,7 +152,7 @@ d3.json('layer2_layout.json', function (data) {
     .y(function (d) { return y(d[1]) })
     .curve(d3.curveBundle);
 
-  var point_0 = [
+  /* var point_0 = [
     data["points"][0]["epoch0"],
     data["points"][0]["epoch1"],
     data["points"][0]["epoch2"],
@@ -145,19 +162,23 @@ d3.json('layer2_layout.json', function (data) {
 
   //console.log(point_0);
   var pathdata = line(point_0);
-  //console.log(pathdata);
+  //console.log(pathdata); */
 
   //set gradient for lines with label i
   for (var i = 0; i < 10; i++) {
     setGradient(i, colorLuminance(color(i), -0.8), colorLuminance(color(i), 0.4));
   }
-  //setGradient(9, colorLuminance(color(0), -0.6), colorLuminance(color(0), 0.2));
 
-  canvas.append("path")
+  for (var i = 0; i < 500; i++) {
+    gen_path(data, i, line);
+  }
+
+  //setGradient(9, colorLuminance(color(0), -0.6), colorLuminance(color(0), 0.2));
+  /* canvas.append("path")
     .attr('d', pathdata)
     .attr("stroke", "url(#svgGradient9)")
     .attr("stroke-width", 2)
-    .attr("fill", "none");
+    .attr("fill", "none"); */
 });
 
 
