@@ -79,16 +79,72 @@ function plot_epoch(data, epoch_num, saturation_scale, x, y, color, circle) {
   return circle;
 }
 
-function gen_path(data, index, line) {
-  var points = [
-    data["points"][index]["epoch0"],
-    data["points"][index]["epoch1"],
-    data["points"][index]["epoch2"],
-    data["points"][index]["epoch3"],
-    data["points"][index]["epoch4"]
-  ];
+// generate the average points across the 2nd and 3rd epochs. 
+// generate the average middle two points
+// if clearly an outlier then don't use the average point
+// TODO: might want to rewrite to be medians bc of possible outliers
+function gen_averages(data) {
+  var label_sum_1 = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+  var label_sum_2 = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+  var label_count = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  data["points"].map(function (d) {
+    label_count[d["label"]]++;
 
+    label_sum_1[d["label"]][0] += d["epoch1"][0];
+    label_sum_1[d["label"]][1] += d["epoch1"][1];
+
+    label_sum_2[d["label"]][0] += d["epoch2"][0];
+    label_sum_2[d["label"]][1] += d["epoch2"][1];
+  });
+
+  for (var i = 0; i < 10; i++) {
+    label_sum_1[i][0] /= label_count[i];
+    label_sum_1[i][1] /= label_count[i];
+
+    label_sum_2[i][0] /= label_count[i];
+    label_sum_2[i][1] /= label_count[i];
+  }
+  return [label_sum_1, label_sum_2];
+}
+
+/* determines if the anchor points are far off enough from average
+  that should use the original point instead. 
+  TODO: find average/median distance away from the avg 
+*/
+function check_outlier(orig_point, avg_point, max_dist) {
+  //find the distance between original and average point
+  var dist = Math.sqrt(
+    (orig_point[0] - avg_point[0]) ** 2
+    + (orig_point[1] - avg_point[1]) ** 2
+  );
+  return dist > max_dist ? orig_point : avg_point;
+
+}
+
+function gen_path(data, index, line, opts) {
   var label = data["points"][index]["label"];
+  var points;
+
+  if (opts["epoch1_list"] && opts["epoch2_list"]) {
+    e1_point = check_outlier(data["points"][index]["epoch1"], opts["epoch1_list"][label], 0.011);
+    e2_points = check_outlier(data["points"][index]["epoch2"], opts["epoch2_list"][label], 0.011);
+    points = [
+      data["points"][index]["epoch0"],
+      e1_point,
+      e2_points,
+      data["points"][index]["epoch3"]
+    ];
+  }
+  else {
+    points = [
+      data["points"][index]["epoch0"],
+      data["points"][index]["epoch1"],
+      data["points"][index]["epoch2"],
+      //data["points"][index]["epoch3"]
+      data["points"][index]["epoch4"]
+    ];
+  }
+
   var pathdata = line(points);
 
   canvas.append("path")
@@ -98,87 +154,98 @@ function gen_path(data, index, line) {
     .attr("fill", "none");
 }
 
+function gen_extent(data) {
+  x = [];
+  y = [];
+  for (var i = 0; i < 500; i++) {
+    x.push(data["points"][i]["epoch0"][0]);
+    x.push(data["points"][i]["epoch1"][0]);
+    x.push(data["points"][i]["epoch2"][0]);
+    x.push(data["points"][i]["epoch3"][0]);
+    x.push(data["points"][i]["epoch4"][0]);
+
+    y.push(data["points"][i]["epoch0"][1]);
+    y.push(data["points"][i]["epoch1"][1]);
+    y.push(data["points"][i]["epoch2"][1]);
+    y.push(data["points"][i]["epoch3"][1]);
+    y.push(data["points"][i]["epoch4"][1]);
+  }
+  return [x, y];//[d3.max(x), d3.min(x), d3.max(y), d3.min(y)];
+}
+
 d3.json('layer2_layout.json', function (data) {
   console.log(data);
-  //var e0 = data["points"][0]["epoch0"];
+
   var e0_x = data["points"].map(function (i) { return i["epoch0"][0] });
   var e0_y = data["points"].map(function (i) { return i["epoch0"][1] });
-  //console.log(e0_y);
+
+  var point_range = gen_extent(data);
+  var y_min = d3.min(point_range[1]);
+  var y_max = d3.max(point_range[1]);
+  /* console.log(d3.extent(point_range[0]));
+  console.log(d3.extent(e0_x));
+  console.log("\n");
+
+  console.log(d3.max(point_range[1]));
+  console.log(d3.max(e0_y));
+  console.log("\n");
+
+  console.log(d3.min(point_range[1]));
+  console.log(d3.min(e0_y)); */
 
   var x = d3.scaleLinear()
-    .range([margin.left, width])
-    .domain(d3.extent(e0_x));
+    .range([margin.left, width - margin.right])
+    .domain(d3.extent(point_range[0]));
 
   var y = d3.scaleLinear()
     .range([height, margin.bottom])
-    .domain([d3.max(e0_y), d3.min(e0_y)]);
+    .domain([y_max, y_min]);
 
   var xAxis = d3.axisBottom(x);
   var color = d3.scaleOrdinal(d3.schemeCategory10);
 
-  //var circle_1 = plot_epoch(data["points"], 0, -0.4, x, y, color);
-  //plot_epoch(data["points"], 0, -0.6, x, y, color);
-  /*plot_epoch(data["points"], 1, -0.4, x, y, color);
-  plot_epoch(data["points"], 2, -0.2, x, y, color);
-  plot_epoch(data["points"], 3, 0, x, y, color);
-  plot_epoch(data["points"], 4, 0.2, x, y, color); */
-
-  /* var lines = canvas.selectAll("line")
-    .data(data["points"])
-    .enter()
-    .append("line")
-    .attr("x1", function (d) {
-      //console.log(x(d["epoch0"][0]));
-      return x(d["epoch0"][0]);
-    })
-    .attr("x2", function (d) {
-      //console.log(x(d["epoch1"][0]));
-      return x(d["epoch1"][0]);
-    })
-    .attr("y1", function (d) {
-      //console.log(y(d["epoch0"][1]));
-      return y(d["epoch0"][1]);
-    })
-    .attr("y2", function (d) {
-      //console.log(y(d["epoch1"][1]));
-      return y(d["epoch1"][1]);
-    })
-    .attr("stroke", "grey")
-    .attr('stroke-width', '1px')
-    .attr('opacity', 0.7); */
-
   var line = d3.line()
-    .x(function (d) { return x(d[0]) })
-    .y(function (d) { return y(d[1]) })
-    .curve(d3.curveBundle);
+    .x(function (d) {
+      return x(d[0]);
+      //return typeof (d) == "undefined" ? "" : x(d[0]);
+    })
+    .y(function (d) {
+      console.log(y(d[1]));
 
-  /* var point_0 = [
-    data["points"][0]["epoch0"],
-    data["points"][0]["epoch1"],
-    data["points"][0]["epoch2"],
-    data["points"][0]["epoch3"],
-    data["points"][0]["epoch4"]
-  ];
-
-  //console.log(point_0);
-  var pathdata = line(point_0);
-  //console.log(pathdata); */
+      return y(d[1])
+      //return typeof (d) == "undefined" ? "" : y(d[1]); 
+    })
+    .curve(d3.curveBundle.beta(0.5));
 
   //set gradient for lines with label i
   for (var i = 0; i < 10; i++) {
     setGradient(i, colorLuminance(color(i), -0.8), colorLuminance(color(i), 0.4));
   }
 
+  avgs = gen_averages(data);
+
   for (var i = 0; i < 500; i++) {
-    gen_path(data, i, line);
+    gen_path(data, i, line, { "epoch1_list": avgs[0], "epoch2_list": avgs[1] });
+    //gen_path(data, i, line, {});
   }
 
-  //setGradient(9, colorLuminance(color(0), -0.6), colorLuminance(color(0), 0.2));
-  /* canvas.append("path")
-    .attr('d', pathdata)
-    .attr("stroke", "url(#svgGradient9)")
-    .attr("stroke-width", 2)
-    .attr("fill", "none"); */
+  var legend = canvas.selectAll('legend')
+    .data(color.domain()).enter()
+    .append('g')
+    .attr('class', 'legend')
+    .attr('transform', function (d, i) { return 'translate(0,' + i * 20 + ')'; });
+  legend.append('rect')
+    .attr('x', width)
+    .attr('width', 14)
+    .attr('height', 14)
+    .attr('fill', color)
+  //.attr('fill',function(d){return typeof(d)!='undefined' ? color: 'white';});
+  legend.append('text')
+    .attr('x', width - 6)
+    .attr('y', 11)
+    .attr('text-anchor', 'end')
+    .text(function (d) { return d; })
+    .attr('height, 7');
 });
 
 
