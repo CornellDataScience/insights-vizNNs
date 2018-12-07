@@ -58,8 +58,8 @@ train_images = train_images.reshape(-1, 784)
 test_images = test_images.reshape(-1, 784)
 
 # create some convolutional layers
-layer1 = create_new_conv_layer(
-    x_shaped, 1, 32, [5, 5], [2, 2], name='layer1')
+# y
+#  1, 32, [5, 5], [2, 2], name='layer1')
 layer2 = create_new_conv_layer(
     layer1, 32, 64, [5, 5], [2, 2], name='layer2')
 
@@ -172,8 +172,8 @@ def train_network(fname, epochs=10):
             print("outputs 1 at epoch: ", output_l1)
             outputs_str = list(
                 map(lambda x: np.array2string(np.array(x), separator=","), output_l1))
-            np.save(os.path.join("train_data",
-                                 "denseLayer1_epoch_"+str(epoch)), output_l1)
+            np.save(
+                , output_l1)
 
             output_l2 = dense_layer2.eval(session=sess, feed_dict={
                 x: test_images[:500]})

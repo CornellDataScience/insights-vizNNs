@@ -216,7 +216,7 @@ d3.json('layer2_layout.json', function (data) {
       //return typeof (d) == "undefined" ? "" : x(d[0]);
     })
     .y(function (d) {
-      console.log(y(d[1]));
+      //console.log(y(d[1]));
 
       return y(d[1])
       //return typeof (d) == "undefined" ? "" : y(d[1]); 
@@ -224,8 +224,13 @@ d3.json('layer2_layout.json', function (data) {
     .curve(d3.curveBundle.beta(0.5));
 
   //set gradient for lines with label i
+  var l_color, r_color;
   for (var i = 0; i < 10; i++) {
-    setGradient(i, colorLuminance(color(i), -0.8), colorLuminance(color(i), 0.4));
+    l_color = d3.rgb(color(i)).darker(10);
+    r_color = d3.rgb(color(i)).brighter(1);
+    console.log(d3.rgb(color(i)));
+    console.log(d3.rgb(color(i)).darker(0.8));
+    setGradient(i, l_color, r_color);
   }
 
   avgs = gen_averages(data);
