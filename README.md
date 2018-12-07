@@ -1,4 +1,6 @@
 # insights-vizNNs
+_Jenny Chen, Linnea May_ 
+
 Neural networks, deep learning, artificial intelligence... Everyone seems to know these buzzwords, but very few truly 
 understand how they work. The goal of our project is to try and change that just a little, by building tools to 
 visualize how a neural net is training. 
