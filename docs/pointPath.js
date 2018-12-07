@@ -149,9 +149,15 @@ function gen_path(data, index, line, opts) {
 
   canvas.append("path")
     .attr('d', pathdata)
+    .attr('class', "path" + label)
     .attr("stroke", "url(#svgGradient" + label + ")")
     .attr("stroke-width", 2)
-    .attr("fill", "none");
+    .attr("fill", "none")
+    .attr('stroke-dasharray', '385 385')
+    .attr('stroke-dashoffset', 385)
+    .transition()
+    .duration(6000)
+    .attr('stroke-dashoffset', 0);;
 }
 
 function gen_extent(data) {
@@ -245,7 +251,14 @@ d3.json('layer2_layout.json', function (data) {
     .attr('y', 11)
     .attr('text-anchor', 'end')
     .text(function (d) { return d; })
-    .attr('height, 7');
+    .attr('height, 7')
+  legend
+    .on("mouseover", function (d, i) {
+      canvas.selectAll("path").attr('opacity', 0.1);
+      canvas.selectAll(".path" + d).attr('opacity', 1);
+    })
+    .on("mouseout", function (d) {
+      canvas.selectAll("path").attr("opacity", 1);
+    });;
 });
-
 
